@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 #include "pagespeed/kernel/html/amp_document_filter.h"
 
 #include "pagespeed/kernel/base/string_util.h"
@@ -27,7 +26,6 @@
 
 namespace net_instaweb {
 
-const char AmpDocumentFilter::kUtf8LightningBolt[] = "\xe2\x9a\xa1";
 const char AmpDocumentFilter::kInvalidAmpDirectiveComment[] =
     "Invalid AMP directive -- will be ignored and will probably "
     "be rejected by the AMP validator.";
@@ -37,8 +35,7 @@ AmpDocumentFilter::AmpDocumentFilter(HtmlParse* html_parse,
     : html_parse_(html_parse),
       is_known_(false),
       saw_doctype_(false),
-      discovered_(discovered) {
-}
+      discovered_(discovered) {}
 
 AmpDocumentFilter::~AmpDocumentFilter() {}
 

@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 #ifndef PAGESPEED_KERNEL_HTML_AMP_DOCUMENT_FILTER_H_
 #define PAGESPEED_KERNEL_HTML_AMP_DOCUMENT_FILTER_H_
 
@@ -44,7 +43,7 @@ class HtmlParse;
 // makes a page amp-invalid.
 class AmpDocumentFilter : public EmptyHtmlFilter {
  public:
-  static const char kUtf8LightningBolt[];
+  static constexpr char kUtf8LightningBolt[] = "\xe2\x9a\xa1";
   static const char kInvalidAmpDirectiveComment[];
 
   typedef Callback1<bool> BoolCallback;
@@ -55,7 +54,7 @@ class AmpDocumentFilter : public EmptyHtmlFilter {
   // be allocated with NewPermanentCallback.  Ownership is tranferred to
   // the filter.
   AmpDocumentFilter(HtmlParse* html_parse, BoolCallback* discovered);
-  virtual ~AmpDocumentFilter();
+  ~AmpDocumentFilter() override;
 
   void StartDocument() override;
   void EndDocument() override;

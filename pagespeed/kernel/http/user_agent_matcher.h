@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 #ifndef PAGESPEED_KERNEL_HTTP_USER_AGENT_MATCHER_H_
 #define PAGESPEED_KERNEL_HTTP_USER_AGENT_MATCHER_H_
 
@@ -31,16 +30,16 @@
 #include "pagespeed/kernel/base/string_util.h"
 #include "pagespeed/kernel/util/re2.h"
 
-using std::pair;
 using std::make_pair;
 using std::map;
+using std::pair;
 
 namespace net_instaweb {
 
 class RequestHeaders;
 
 // This class contains various user agent based checks.  Currently all of these
-// are based on simple wildcard based white- and black-lists.
+// are based on simple wildcard based allow- and blocked-lists.
 //
 // TODO(sriharis):  Split the functionality here into two: a matcher that
 // pulls out all relevant information from UA strings (browser-family, version,
@@ -111,7 +110,9 @@ class UserAgentMatcher {
   // IE9 does not implement <link rel=dns-prefetch ...>. Instead it does DNS
   // preresolution when it sees <link rel=prefetch ...>. This method returns
   // true if the browser support DNS prefetch using rel=prefetch.
-  // Refer: http://blogs.msdn.com/b/ie/archive/2011/03/17/internet-explorer-9-network-performance-improvements.aspx NOLINT
+  // Refer:
+  // http://blogs.msdn.com/b/ie/archive/2011/03/17/internet-explorer-9-network-performance-improvements.aspx
+  // NOLINT
   bool SupportsDnsPrefetchUsingRelPrefetch(const StringPiece& user_agent) const;
   bool SupportsDnsPrefetch(const StringPiece& user_agent) const;
 
@@ -123,25 +124,25 @@ class UserAgentMatcher {
   virtual bool GetChromeBuildNumber(const StringPiece& user_agent, int* major,
                                     int* minor, int* build, int* patch) const;
 
-  bool UserAgentExceedsChromeAndroidBuildAndPatch(
-      const StringPiece& user_agent, int required_build,
-      int required_patch) const;
+  bool UserAgentExceedsChromeAndroidBuildAndPatch(const StringPiece& user_agent,
+                                                  int required_build,
+                                                  int required_patch) const;
 
-  bool UserAgentExceedsChromeiOSBuildAndPatch(
-      const StringPiece& user_agent, int required_build,
-      int required_patch) const;
+  bool UserAgentExceedsChromeiOSBuildAndPatch(const StringPiece& user_agent,
+                                              int required_build,
+                                              int required_patch) const;
 
-  bool UserAgentExceedsChromeBuildAndPatch(
-      const StringPiece& user_agent, int required_build,
-      int required_patch) const;
+  bool UserAgentExceedsChromeBuildAndPatch(const StringPiece& user_agent,
+                                           int required_build,
+                                           int required_patch) const;
 
   bool SupportsMobilization(StringPiece user_agent) const;
 
  private:
   FastWildcardGroup supports_image_inlining_;
   FastWildcardGroup supports_lazyload_images_;
-  FastWildcardGroup defer_js_whitelist_;
-  FastWildcardGroup defer_js_mobile_whitelist_;
+  FastWildcardGroup defer_js_allowlist_;
+  FastWildcardGroup defer_js_mobile_allowlist_;
   FastWildcardGroup legacy_webp_;
   FastWildcardGroup supports_webp_lossless_alpha_;
   FastWildcardGroup supports_webp_animated_;
@@ -152,8 +153,8 @@ class UserAgentMatcher {
   FastWildcardGroup mobilization_user_agents_;
 
   const RE2 chrome_version_pattern_;
-  scoped_ptr<RE2> known_devices_pattern_;
-  mutable map <GoogleString, pair<int, int> > screen_dimensions_map_;
+  std::unique_ptr<RE2> known_devices_pattern_;
+  mutable map<GoogleString, pair<int, int> > screen_dimensions_map_;
 
   DISALLOW_COPY_AND_ASSIGN(UserAgentMatcher);
 };

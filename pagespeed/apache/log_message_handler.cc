@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 #include "pagespeed/apache/log_message_handler.h"
 
 #include <unistd.h>
@@ -25,8 +24,6 @@
 #include <limits>
 #include <string>
 
-#include "base/debug/debugger.h"
-#include "base/debug/stack_trace.h"
 #include "base/logging.h"
 #include "pagespeed/apache/apache_httpd_includes.h"
 #include "pagespeed/apache/apache_logging_includes.h"
@@ -38,25 +35,23 @@
 
 namespace {
 
-apr_pool_t* log_pool = NULL;
+apr_pool_t* log_pool = nullptr;
 
 const int kMaxInt = std::numeric_limits<int>::max();
 int log_level_cutoff = kMaxInt;
-GoogleString* mod_pagespeed_version = NULL;
+GoogleString* mod_pagespeed_version = nullptr;
 
 int GetApacheLogLevel(int severity) {
   switch (severity) {
     case logging::LOG_INFO:
       // Note: ap_log_perror only prints NOTICE and higher messages.
       // TODO(sligocki): Find some way to print these as INFO if we can.
-      //return APLOG_INFO;
+      // return APLOG_INFO;
       return APLOG_NOTICE;
     case logging::LOG_WARNING:
       return APLOG_WARNING;
     case logging::LOG_ERROR:
       return APLOG_ERR;
-    case logging::LOG_ERROR_REPORT:
-      return APLOG_CRIT;
     case logging::LOG_FATAL:
       return APLOG_ALERT;
     default:  // For VLOG()s
@@ -66,21 +61,9 @@ int GetApacheLogLevel(int severity) {
 }
 
 bool LogMessageHandler(int severity, const char* file, int line,
-                       size_t message_start, const GoogleString& str) {
+                       const GoogleString& str) {
   const int this_log_level = GetApacheLogLevel(severity);
-
-  GoogleString message = str;
-  if (severity == logging::LOG_FATAL) {
-    if (base::debug::BeingDebugged()) {
-      base::debug::BreakDebugger();
-    } else {
-      base::debug::StackTrace trace;
-      std::ostringstream stream;
-      trace.OutputToStream(&stream);
-      message.append(stream.str());
-    }
-  }
-
+  GoogleString message(str);
   // Trim the newline off the end of the message string.
   size_t last_msg_character_index = message.length() - 1;
   if (message[last_msg_character_index] == '\n') {
@@ -90,16 +73,10 @@ bool LogMessageHandler(int severity, const char* file, int line,
   if (this_log_level <= log_level_cutoff || log_level_cutoff == kMaxInt) {
     ap_log_perror(APLOG_MARK, this_log_level, APR_SUCCESS, log_pool,
                   "[mod_pagespeed %s @%ld] %s",
-                  (mod_pagespeed_version == NULL)
-                    ? ""
-                    : mod_pagespeed_version->c_str(),
-                  static_cast<long>(getpid()),
-                  message.c_str());
-  }
-
-  if (severity == logging::LOG_FATAL) {
-    // Crash the process to generate a dump.
-    base::debug::BreakDebugger();
+                  (mod_pagespeed_version == nullptr)
+                      ? ""
+                      : mod_pagespeed_version->c_str(),
+                  static_cast<long>(getpid()), message.c_str());
   }
 
   return true;
@@ -107,21 +84,32 @@ bool LogMessageHandler(int severity, const char* file, int line,
 
 }  // namespace
 
-
 namespace net_instaweb {
 
 namespace log_message_handler {
 
+class ApacheGLogSink : public PageSpeedGLogSink {
+  void send(google::LogSeverity severity, const char* full_filename,
+            const char* base_filename, int line, const struct tm* tm_time,
+            const char* message, size_t message_len) override {
+    LogMessageHandler(severity, base_filename, line,
+                      std::string(message, message_len));
+  }
+};
+
+std::unique_ptr<ApacheGLogSink> apache_glog_sink = nullptr;
+
 void Install(apr_pool_t* pool) {
   log_pool = pool;
-  logging::SetLogMessageHandler(&LogMessageHandler);
+  apache_glog_sink = std::make_unique<ApacheGLogSink>();
 }
 
 void ShutDown() {
-  if (mod_pagespeed_version != NULL) {
+  if (mod_pagespeed_version != nullptr) {
     delete mod_pagespeed_version;
-    mod_pagespeed_version = NULL;
+    mod_pagespeed_version = nullptr;
   }
+  apache_glog_sink.release();
 }
 
 // What Google level of logs to display when Apache LogLevel is Debug.
@@ -146,15 +134,14 @@ void AddServerConfig(const server_rec* server, const StringPiece& version) {
 
   // Get VLOG(x) and above if LogLevel is set to Debug.
   if (log_level_cutoff >= APLOG_DEBUG) {
-    logging::SetMinLogLevel(kDebugLogLevel);
+    apache_glog_sink->setMinLogLevel(kDebugLogLevel);
   }
-  if (mod_pagespeed_version == NULL) {
+  if (mod_pagespeed_version == nullptr) {
     mod_pagespeed_version = new GoogleString(version.as_string());
   } else {
     *mod_pagespeed_version = version.as_string();
   }
 }
-
 
 }  // namespace log_message_handler
 

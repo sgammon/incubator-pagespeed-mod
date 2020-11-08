@@ -17,14 +17,12 @@
  * under the License.
  */
 
-
 #ifndef PAGESPEED_CONTROLLER_CENTRAL_CONTROLLER_RPC_CLIENT_H_
 #define PAGESPEED_CONTROLLER_CENTRAL_CONTROLLER_RPC_CLIENT_H_
 
 #include <memory>
 #include <unordered_set>
 
-#include "base/macros.h"
 #include "pagespeed/controller/central_controller.h"
 #include "pagespeed/controller/controller.grpc.pb.h"
 #include "pagespeed/controller/expensive_operation_callback.h"
@@ -60,7 +58,7 @@ class CentralControllerRpcClient : public CentralController {
                              int panic_threshold, ThreadSystem* thread_system,
                              Timer* timer, Statistics* statistics,
                              MessageHandler* handler);
-  virtual ~CentralControllerRpcClient();
+  ~CentralControllerRpcClient() override;
 
   // CentralController implementation.
   void ScheduleExpensiveOperation(
@@ -109,7 +107,7 @@ class CentralControllerRpcClient : public CentralController {
 
   std::unique_ptr<::grpc::CompletionQueue> queue_;
   std::shared_ptr<::grpc::ChannelInterface> channel_;
-  std::unique_ptr<grpc::CentralControllerRpcService::Stub> stub_;
+  std::unique_ptr<CentralControllerRpcService::Stub> stub_;
 
   // This must be last so that it's destructed first.
   std::unique_ptr<GrpcClientThread> client_thread_ GUARDED_BY(mutex_);

@@ -17,11 +17,10 @@
  * under the License.
  */
 
-
 #ifndef NET_INSTAWEB_UTIL_PUBLIC_MOCK_PROPERTY_PAGE_H_
 #define NET_INSTAWEB_UTIL_PUBLIC_MOCK_PROPERTY_PAGE_H_
 
 // TODO(morlovich): Remove this forwarding header and change all references.
-#include "pagespeed/opt/http/mock_property_page.h"
+#include "test/pagespeed/opt/http/mock_property_page.h"
 
 #endif  // NET_INSTAWEB_UTIL_PUBLIC_MOCK_PROPERTY_PAGE_H_
